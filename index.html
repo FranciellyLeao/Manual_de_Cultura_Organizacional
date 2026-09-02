@@ -2,21 +2,21 @@
 <html>
 <!-- INÍCIO DO SCRIPT CORRIGIDO E DEFINITIVO -->
 <script>
-    // 1. GIRA AS PÁGINAS 5 E 7 E DESVIRA AS CAIXAS DE TEXTO
+    // 1. GIRA, ALINHA A LARGURA E DESVIRA AS CAIXAS
     document.addEventListener('DOMContentLoaded', function() {
-        // As páginas 5 e 7 no código são identificadas como p4 e p6
         const paginasParaCorrigir = ['p4', 'p6']; 
         
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
             if (pagina) {
-                // Gira a página inteira para ficar deitada (horizontal)
-                pagina.style.transform = 'rotate(90deg)';
-                // Tira o espaço em branco gigante que fica sobrando
-                pagina.style.marginTop = '-160px';
-                pagina.style.marginBottom = '-160px';
+                // Gira a página e aplica uma escala de 0.707 para a largura igualar as demais
+                pagina.style.transform = 'rotate(90deg) scale(0.707)';
                 
-                // Pega os campos de texto, transforma em caixas grandes e desvira
+                // Compensa a altura extra para não ficar um buraco em branco gigante
+                pagina.style.marginTop = '-280px';
+                pagina.style.marginBottom = '-280px';
+                
+                // Ajusta os campos de texto
                 pagina.querySelectorAll('.fld').forEach(fld => {
                     const ta = document.createElement('textarea');
                     ta.className = fld.className;
@@ -24,10 +24,10 @@
                     ta.value = fld.value;
                     ta.style.cssText = fld.style.cssText;
                     
-                    // Gira a caixa para o lado contrário para ela ficar reta pra você
+                    // Desvira a caixa de texto
                     ta.style.transform = 'rotate(-90deg)';
                     ta.style.transformOrigin = 'center center';
-                    ta.style.resize = 'none'; // Trava o tamanho
+                    ta.style.resize = 'none'; 
                     
                     fld.parentNode.replaceChild(ta, fld);
                 });
@@ -62,7 +62,7 @@
             alert("✅ Mapa de Empatia salvo com sucesso!");
             btn.innerHTML = conteudoOriginal;
             btn.disabled = false;
-            document.querySelectorAll('.fld').forEach(i => i.value = ""); // Limpa a tela
+            document.querySelectorAll('.fld').forEach(i => i.value = ""); 
         })
         .catch(err => {
             alert("❌ Erro de conexão. Verifique sua internet.");
