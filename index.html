@@ -1,33 +1,37 @@
 <!DOCTYPE html>
 <html>
-<!-- INÍCIO DO SCRIPT DO BANCO DE DADOS E CORREÇÃO DE PÁGINAS -->
+<!-- INÍCIO DO SCRIPT CORRIGIDO E DEFINITIVO -->
 <script>
-    // 1. CORREÇÃO MÁGICA DAS PÁGINAS 5 E 7 (p4 e p6)
+    // 1. GIRA AS PÁGINAS 5 E 7 E DESVIRA AS CAIXAS DE TEXTO
     document.addEventListener('DOMContentLoaded', function() {
-        const paginasParaCorrigir = ['p4', 'p6'];
+        // As páginas 5 e 7 no código são identificadas como p4 e p6
+        const paginasParaCorrigir = ['p4', 'p6']; 
         
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
-            if (!pagina) return;
-            
-            pagina.querySelectorAll('.fld').forEach(fld => {
-                // Cria a caixa de múltiplas linhas
-                const ta = document.createElement('textarea');
-                ta.className = fld.className;
-                ta.name = fld.name;
-                ta.value = fld.value;
+            if (pagina) {
+                // Gira a página inteira para ficar deitada (horizontal)
+                pagina.style.transform = 'rotate(90deg)';
+                // Tira o espaço em branco gigante que fica sobrando
+                pagina.style.marginTop = '-160px';
+                pagina.style.marginBottom = '-160px';
                 
-                // Copia o estilo EXATO do input original (sem inverter largura/altura)
-                ta.style.cssText = fld.style.cssText;
-                
-                // O segredo: apenas gira a caixa no próprio eixo para compensar a página
-                ta.style.transform = 'rotate(-90deg)';
-                ta.style.transformOrigin = 'center center';
-                ta.style.resize = 'none'; // Impede o usuário de quebrar o layout
-                
-                // Substitui no HTML
-                fld.parentNode.replaceChild(ta, fld);
-            });
+                // Pega os campos de texto, transforma em caixas grandes e desvira
+                pagina.querySelectorAll('.fld').forEach(fld => {
+                    const ta = document.createElement('textarea');
+                    ta.className = fld.className;
+                    ta.name = fld.name;
+                    ta.value = fld.value;
+                    ta.style.cssText = fld.style.cssText;
+                    
+                    // Gira a caixa para o lado contrário para ela ficar reta pra você
+                    ta.style.transform = 'rotate(-90deg)';
+                    ta.style.transformOrigin = 'center center';
+                    ta.style.resize = 'none'; // Trava o tamanho
+                    
+                    fld.parentNode.replaceChild(ta, fld);
+                });
+            }
         });
     });
 
