@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
-<!-- INÍCIO DO SCRIPT CORRIGIDO E DEFINITIVO -->
+<!-- INÍCIO DO SCRIPT DEFINITIVO -->
 <script>
-    // 1. GIRA, ALINHA A LARGURA E DESVIRA AS CAIXAS
+    // 1. GIRA, FORÇA A ESCALA COM !IMPORTANT E DESVIRA AS CAIXAS
     document.addEventListener('DOMContentLoaded', function() {
         const paginasParaCorrigir = ['p4', 'p6']; 
         
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
             if (pagina) {
-                // Gira a página e aplica uma escala de 0.707 para a largura igualar as demais
-                pagina.style.transform = 'rotate(90deg) scale(0.707)';
+                // Força bruta para aplicar a rotação e a escala exata (70.7%)
+                pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
+                pagina.style.setProperty('transform-origin', 'center center', 'important');
                 
-                // Compensa a altura extra para não ficar um buraco em branco gigante
-                pagina.style.marginTop = '-280px';
-                pagina.style.marginBottom = '-280px';
+                // Remove exatamente a sobra de espaço em branco em cima e embaixo
+                pagina.style.setProperty('margin-top', '-164px', 'important');
+                pagina.style.setProperty('margin-bottom', '-164px', 'important');
                 
                 // Ajusta os campos de texto
                 pagina.querySelectorAll('.fld').forEach(fld => {
@@ -25,8 +26,8 @@
                     ta.style.cssText = fld.style.cssText;
                     
                     // Desvira a caixa de texto
-                    ta.style.transform = 'rotate(-90deg)';
-                    ta.style.transformOrigin = 'center center';
+                    ta.style.setProperty('transform', 'rotate(-90deg)', 'important');
+                    ta.style.setProperty('transform-origin', 'center center', 'important');
                     ta.style.resize = 'none'; 
                     
                     fld.parentNode.replaceChild(ta, fld);
