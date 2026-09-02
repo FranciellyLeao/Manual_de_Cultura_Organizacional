@@ -5,14 +5,33 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
 
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. APAGAR O "2025" DA TELA (Caçador Agressivo)
-        document.querySelectorAll('.t').forEach(el => {
-            // Tira todos os espaços em branco invisíveis para garantir que vai achar o 2025
-            if(el.textContent.replace(/\s+/g, '').includes('2025')) {
-                el.style.color = 'transparent'; // Deixa o texto invisível
-                el.style.opacity = '0';
+        // 1. APAGAR O "2025" DA IMAGEM DA CAPA (edita a imagem via Canvas)
+        (function() {
+            var p0 = document.getElementById('p0');
+            if (!p0) return;
+            var img = p0.querySelector('img.bg');
+            if (!img) return;
+            function apagar2025() {
+                var canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                var s = img.naturalWidth / 794;
+                var x = Math.round(55 * s);
+                var y = Math.round(945 * s);
+                var w = Math.round(270 * s);
+                var h = Math.round(65 * s);
+                var cleanY = y + h + 20;
+                var cleanStrip = ctx.getImageData(x, cleanY, w, 1);
+                for (var row = 0; row < h; row++) {
+                    ctx.putImageData(cleanStrip, x, y + row);
+                }
+                img.src = canvas.toDataURL('image/jpeg', 0.95);
             }
-        });
+            if (img.complete && img.naturalWidth > 0) { apagar2025(); }
+            else { img.onload = apagar2025; }
+        })();
 
         // 2. CORRIGIR AS PÁGINAS HORIZONTAIS
         const paginasParaCorrigir = ['p4', 'p6']; 
@@ -637,15 +656,7 @@ function baixarDados() {
             }
         }, 500);
 
-        // 3. APAGAR O 2025 (Mesmo se ele estiver quebrado)
-        document.querySelectorAll('.t').forEach(el => {
-            if(el.textContent.includes('20') || el.textContent.includes('25')) {
-                // Tenta achar qualquer pedaço do 2025 e deixa invisível
-                if(el.textContent.length <= 4) {
-                    el.style.opacity = '0'; 
-                }
-            }
-        });
+        // 3. (2025 já é removido pela edição da imagem no primeiro script)
 
         // 4. CORREÇÃO DAS PÁGINAS E CAIXAS
         try {
