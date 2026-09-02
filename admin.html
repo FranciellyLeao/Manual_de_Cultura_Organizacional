@@ -114,8 +114,40 @@
             padding: 6px 14px; border: none; border-radius: 6px;
             font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
+        .btn-edit { background: #eef2ff; color: #0052CC; }
+        .btn-edit:hover { background: #d1dfff; }
         .btn-del { background: #fee2e2; color: #dc2626; }
         .btn-del:hover { background: #fecaca; }
+        .btn-group { display: flex; gap: 8px; }
+
+        /* Modal de edição */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff; border-radius: 12px; padding: 30px; width: 90%; max-width: 600px;
+            max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .modal h3 { color: #0052CC; margin-bottom: 20px; font-size: 18px; }
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label { display: block; font-size: 12px; font-weight: 600; color: #0052CC; margin-bottom: 4px; }
+        .modal-field input, .modal-field textarea {
+            width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 14px; font-family: inherit; outline: none; transition: border 0.2s;
+        }
+        .modal-field input:focus, .modal-field textarea:focus { border-color: #0052CC; }
+        .modal-field textarea { resize: vertical; min-height: 60px; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .modal-btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .modal-btn-cancel { background: #f0f0f0; color: #666; }
+        .modal-btn-cancel:hover { background: #e0e0e0; }
+        .modal-btn-save { background: linear-gradient(135deg, #0052CC 0%, #003d99 100%); color: #fff; }
+        .modal-btn-save:hover { box-shadow: 0 4px 12px rgba(0,82,204,0.3); }
 
         /* Loading */
         .loading { text-align: center; padding: 60px 20px; color: #888; }
@@ -196,6 +228,18 @@
         </div>
     </div>
 
+    <!-- Modal de Edição -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)fecharModal()">
+        <div class="modal">
+            <h3>Editar Resposta</h3>
+            <div id="modalFields"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="fecharModal()">Cancelar</button>
+                <button class="modal-btn modal-btn-save" onclick="salvarEdicao()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
         let dadosGlobais = [];
@@ -266,7 +310,7 @@
                     fieldsHtml = '<span class="tag" style="color:#dc2626">Erro ao ler dados</span>';
                 }
 
-                card.innerHTML = '<div class="resp-header"><span class="resp-date">' + (item.data || 'Sem data') + '</span><button class="btn-action btn-del" onclick="deletar(\'' + item.id + '\', this)">Excluir</button></div><div class="resp-fields">' + (fieldsHtml || '<span class="tag" style="color:#999;font-style:italic">Enviado em branco</span>') + '</div>';
+                card.innerHTML = '<div class="resp-header"><span class="resp-date">' + (item.data || 'Sem data') + '</span><div class="btn-group"><button class="btn-action btn-edit" onclick="abrirEdicao(\'' + item.id + '\')">Editar</button><button class="btn-action btn-del" onclick="deletar(\'' + item.id + '\', this)">Excluir</button></div></div><div class="resp-fields">' + (fieldsHtml || '<span class="tag" style="color:#999;font-style:italic">Enviado em branco</span>') + '</div>';
                 container.appendChild(card);
             });
         }
@@ -293,6 +337,66 @@
                     if (btn) { btn.textContent = 'Excluir'; btn.disabled = false; }
                 });
             }
+        }
+        let editandoId = null;
+
+        function abrirEdicao(id) {
+            const item = dadosGlobais.find(d => d.id === id);
+            if (!item) return;
+            editandoId = id;
+
+            let campos = {};
+            try { campos = JSON.parse(item.respostas); } catch(e) {}
+
+            const container = document.getElementById('modalFields');
+            container.innerHTML = '';
+
+            for (let key in campos) {
+                const div = document.createElement('div');
+                div.className = 'modal-field';
+                const val = campos[key] || '';
+                const isLong = val.length > 50;
+                div.innerHTML = '<label>' + key + '</label>' +
+                    (isLong ? '<textarea data-key="' + key + '">' + val + '</textarea>'
+                            : '<input data-key="' + key + '" value="' + val.replace(/"/g, '&quot;') + '">');
+                container.appendChild(div);
+            }
+
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function fecharModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            editandoId = null;
+        }
+
+        function salvarEdicao() {
+            if (!editandoId) return;
+
+            const campos = {};
+            document.querySelectorAll('#modalFields [data-key]').forEach(el => {
+                campos[el.dataset.key] = el.value;
+            });
+
+            const fd = new URLSearchParams();
+            fd.append('action', 'editar');
+            fd.append('id', editandoId);
+            fd.append('respostas', JSON.stringify(campos));
+
+            const btnSave = document.querySelector('.modal-btn-save');
+            btnSave.textContent = 'Salvando...';
+            btnSave.disabled = true;
+
+            fetch(SCRIPT_URL, { method: 'POST', body: fd })
+            .then(() => {
+                fecharModal();
+                carregar();
+            })
+            .catch(err => {
+                alert('Erro ao salvar. Tente novamente.');
+                btnSave.textContent = 'Salvar Alterações';
+                btnSave.disabled = false;
+            });
         }
     </script>
 </body>
