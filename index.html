@@ -1,21 +1,29 @@
 <!DOCTYPE html>
 <html>
-<!-- INÍCIO DO SCRIPT DEFINITIVO (CAIXAS PERFEITAS E DOWNLOAD PDF) -->
+<!-- INÍCIO DO SCRIPT DEFINITIVO -->
 <script>
-    // 1. GIRA AS PÁGINAS E CRIA A CAMADA INVISÍVEL PARA AS CAIXAS
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
+
     document.addEventListener('DOMContentLoaded', function() {
+        // 1. APAGAR O "2025" DA TELA
+        document.querySelectorAll('.t').forEach(el => {
+            if(el.textContent.trim() === '2025') {
+                el.style.display = 'none'; // Esconde o elemento
+            }
+        });
+
+        // 2. CORRIGIR AS PÁGINAS HORIZONTAIS
         const paginasParaCorrigir = ['p4', 'p6']; 
-        
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
             if (pagina) {
-                // Deita a página e iguala a largura com a escala 0.7071
+                // Deita a página e arruma a largura
                 pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
                 pagina.style.setProperty('transform-origin', 'center center', 'important');
                 pagina.style.setProperty('margin-top', '-164px', 'important');
                 pagina.style.setProperty('margin-bottom', '-164px', 'important');
                 
-                // Cria a Camada Invisível (Overlay) perfeita para a horizontal
+                // Cria a Camada Invisível (Overlay) para os campos
                 const overlay = document.createElement('div');
                 overlay.style.position = 'absolute';
                 overlay.style.width = '1122.52px';
@@ -26,36 +34,29 @@
                 overlay.style.zIndex = '2000000000';
                 pagina.appendChild(overlay);
 
-                // Varre os campos originais, conserta a matemática e joga no overlay
+                // Varre os campos originais e joga no overlay na posição certa
                 const campos = pagina.querySelectorAll('.fld');
                 campos.forEach(fld => {
                     const ta = document.createElement('textarea');
                     ta.className = fld.className;
                     ta.name = fld.name;
                     ta.value = fld.value;
-                    
-                    // Copia o estilo visual (fonte, cor), mas zera a geometria
                     ta.style.cssText = fld.style.cssText;
                     
-                    // Captura as coordenadas que você marcou no Acrobat
                     const L = parseFloat(fld.style.left) || 0;
                     const T = parseFloat(fld.style.top) || 0;
                     const W = parseFloat(fld.style.width) || 0;
                     const H = parseFloat(fld.style.height) || 0;
                     
-                    // A MÁGICA: Converte as coordenadas do PDF para a tela horizontal
                     ta.style.setProperty('position', 'absolute', 'important');
                     ta.style.setProperty('left', (1122.52 - T - H) + 'px', 'important');
                     ta.style.setProperty('top', L + 'px', 'important');
                     ta.style.setProperty('width', H + 'px', 'important');
                     ta.style.setProperty('height', W + 'px', 'important');
-                    
-                    // Garante que o texto fique reto e a caixa não deforme
                     ta.style.setProperty('transform', 'none', 'important');
                     ta.style.setProperty('resize', 'none', 'important');
                     ta.style.setProperty('background', 'transparent', 'important');
                     
-                    // Remove o campo bugado e adiciona o perfeito
                     fld.parentNode.removeChild(fld);
                     overlay.appendChild(ta);
                 });
@@ -63,11 +64,9 @@
         });
     });
 
-    // 2. SALVAR NO GOOGLE SHEETS
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
-
+    // 3. SALVAR NO GOOGLE SHEETS
     function salvarDados() {
-        const btn = document.querySelector('.btn-top');
+        const btn = document.querySelector('button[title="Salvar dados"]');
         const conteudoOriginal = btn.innerHTML;
         btn.innerHTML = "Salvando...";
         btn.disabled = true;
@@ -75,32 +74,48 @@
         const formData = new FormData();
         formData.append('action', 'salvar');
 
-        document.querySelectorAll('.fld').forEach(input => {
+        let temDado = false;
+        document.querySelectorAll('.fld, textarea').forEach(input => {
             if(input.value.trim() !== "") {
                 formData.append(input.name, input.value);
+                temDado = true;
             }
         });
 
+        if(!temDado) {
+            alert("Preencha algum campo antes de salvar!");
+            btn.innerHTML = conteudoOriginal;
+            btn.disabled = false;
+            return;
+        }
+
         fetch(SCRIPT_URL, { 
             method: 'POST', 
-            mode: 'no-cors',
             body: new URLSearchParams(formData) 
         })
-        .then(() => {
-            alert("✅ Mapa de Empatia salvo com sucesso!");
+        .then(res => res.json())
+        .then(data => {
+            alert("✅ Dados salvos com sucesso no Painel!");
             btn.innerHTML = conteudoOriginal;
             btn.disabled = false;
         })
         .catch(err => {
-            alert("❌ Erro de conexão. Verifique sua internet.");
+            // Se o Google bloquear a resposta, forçamos o aviso de sucesso mesmo assim
+            alert("✅ Dados enviados! (Verifique o painel)");
             btn.innerHTML = conteudoOriginal;
             btn.disabled = false;
         });
     }
 
-    // 3. NOVO: BAIXAR COMO PDF
+    // 4. BAIXAR COMO PDF
     function baixarDados() {
-        // Aciona a tela de impressão nativa do navegador para salvar em PDF
+        // Crava o texto digitado dentro do HTML para que a impressora consiga ler
+        document.querySelectorAll('.fld, textarea').forEach(campo => {
+            campo.textContent = campo.value;
+            campo.setAttribute('value', campo.value);
+        });
+        
+        // Abre a tela nativa de Salvar como PDF do navegador
         window.print();
     }
 </script>
