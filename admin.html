@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Cultura</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        #loginArea { max-width: 400px; margin: 100px auto; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { background: #1360e8; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: #0f4ca5; }
+        .btn-del { background: #e74c3c; width: auto; font-size: 12px; padding: 8px; margin-top:10px;}
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; vertical-align: top; }
+        th { background: #f8f9fa; color: #1360e8; }
+        .tag { display: inline-block; background: #eef2ff; color: #1360e8; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 3px; border: 1px solid #d1dfff;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Login -->
+        <div id="loginArea" class="card">
+            <h2>🔒 Área Restrita</h2>
+            <input type="password" id="senha" placeholder="Senha de acesso" onkeypress="if(event.key === 'Enter') entrar()">
+            <button onclick="entrar()">Acessar</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardArea" style="display: none;">
+            <div class="card">
+                <h2>📋 Mapas de Empatia Recebidos</h2>
+                <input type="text" id="busca" placeholder="🔍 Buscar por qualquer palavra ou nome..." onkeyup="filtrar()">
+                
+                <div id="loading" style="text-align: center; padding: 20px;">Carregando respostas...</div>
+
+                <table id="tabela" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th width="150">Data</th>
+                            <th>Respostas do Usuário</th>
+                            <th width="100">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔴 COLE A SUA URL DO GOOGLE AQUI:
+        const SCRIPT_URL = "COLE_SUA_URL_AQUI";
+        let dadosGlobais = [];
+
+        function entrar() {
+            if (document.getElementById('senha').value === "12345678") {
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('dashboardArea').style.display = 'block';
+                carregar();
+            } else { alert("Senha incorreta!"); }
+        }
+
+        function carregar() {
+            fetch(SCRIPT_URL).then(r => r.json()).then(data => {
+                dadosGlobais = data.reverse();
+                renderizar(dadosGlobais);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('tabela').style.display = 'table';
+            });
+        }
+
+        function renderizar(dados) {
+            const tbody = document.getElementById('corpoTabela');
+            tbody.innerHTML = '';
+            
+            dados.forEach(item => {
+                let respostasHtml = '';
+                try {
+                    let resp = JSON.parse(item.respostas);
+                    // Pega cada campo e transforma num cartãozinho visual
+                    for(let key in resp) {
+                        respostasHtml += `<div class="tag"><strong>${key}:</strong> ${resp[key]}</div>`;
+                    }
+                } catch(e) { respostasHtml = 'Erro ao ler dados'; }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.data}</strong></td>
+                    <td>${respostasHtml || '<em style="color:#999">Enviado em branco</em>'}</td>
+                    <td><button class="btn-del" onclick="deletar('${item.id}')">Excluir</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrar() {
+            const termo = document.getElementById('busca').value.toLowerCase();
+            const filtrados = dadosGlobais.filter(item => item.respostas.toLowerCase().includes(termo));
+            renderizar(filtrados);
+        }
+
+        function deletar(id) {
+            if(confirm("Apagar este registro permanentemente?")) {
+                const fd = new URLSearchParams();
+                fd.append('action', 'deletar');
+                fd.append('id', id);
+                fetch(SCRIPT_URL, { method: 'POST', body: fd }).then(() => carregar());
+            }
+        }
+    </script>
+</body>
+</html>
