@@ -131,14 +131,16 @@
     function baixarDados() {
         // Crava o texto no HTML para a impressora ler perfeitamente
         document.querySelectorAll('.fld, textarea').forEach(campo => {
-            campo.innerHTML = campo.value; // Força o texto para impressão
+            campo.innerHTML = campo.value;
             campo.setAttribute('value', campo.value);
         });
-        
-        // Dá 1 segundo para o navegador processar o texto e abre a tela de salvar em PDF
+
+        // Instrução para o usuário
+        alert("Na tela de impressão que vai abrir:\n\n• Destino: Salvar como PDF\n• Margens: Nenhuma\n• Marque: Gráficos de segundo plano\n\nAssim o PDF fica perfeito!");
+
         setTimeout(() => {
             window.print();
-        }, 500);
+        }, 300);
     }
 </script>
 <!-- FIM DO SCRIPT -->
@@ -429,10 +431,18 @@ body { background: #e8e8e8; margin-top: 50px; }
 /* Print / PDF round-trip: one source page per printed page, no chrome margins or shadow.
    The exact paper size is pinned by a generated @page rule when all pages share one size. */
 @media print {
-	body { background: #fff; margin-top: 0; }
+	body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
 	.top-bar, .toc, .thumbs { display: none !important; }
-	.page { margin: 0; box-shadow: none; break-after: page; }
+	.page {
+		margin: 0 !important; padding: 0 !important;
+		box-shadow: none !important;
+		width: 793.7px !important; height: 1122.52px !important;
+		break-after: page;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
 	.page:last-child { break-after: auto; }
+	.page .bg { width: 100% !important; height: auto !important; }
 }
 @page{size:793.7px 1122.52px;margin:0}
 </style>
