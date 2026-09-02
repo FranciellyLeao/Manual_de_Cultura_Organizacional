@@ -1,47 +1,63 @@
 <!DOCTYPE html>
 <html>
-<!-- INÍCIO DO SCRIPT DEFINITIVO (CORREÇÃO DE CAIXAS E DOWNLOAD PDF) -->
+<!-- INÍCIO DO SCRIPT DEFINITIVO (CAIXAS PERFEITAS E DOWNLOAD PDF) -->
 <script>
-    // 1. GIRA PÁGINAS, INVERTE LARGURA/ALTURA E CORRIGE CAIXAS
+    // 1. GIRA AS PÁGINAS E CRIA A CAMADA INVISÍVEL PARA AS CAIXAS
     document.addEventListener('DOMContentLoaded', function() {
         const paginasParaCorrigir = ['p4', 'p6']; 
         
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
             if (pagina) {
-                // Força a página a deitar e igualar a largura
+                // Deita a página e iguala a largura com a escala 0.7071
                 pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
                 pagina.style.setProperty('transform-origin', 'center center', 'important');
                 pagina.style.setProperty('margin-top', '-164px', 'important');
                 pagina.style.setProperty('margin-bottom', '-164px', 'important');
                 
-                // Arruma cada campo de texto dentro dessas páginas
-                pagina.querySelectorAll('.fld').forEach(fld => {
+                // Cria a Camada Invisível (Overlay) perfeita para a horizontal
+                const overlay = document.createElement('div');
+                overlay.style.position = 'absolute';
+                overlay.style.width = '1122.52px';
+                overlay.style.height = '793.7px';
+                overlay.style.top = '50%';
+                overlay.style.left = '50%';
+                overlay.style.transform = 'translate(-50%, -50%) rotate(-90deg)';
+                overlay.style.zIndex = '2000000000';
+                pagina.appendChild(overlay);
+
+                // Varre os campos originais, conserta a matemática e joga no overlay
+                const campos = pagina.querySelectorAll('.fld');
+                campos.forEach(fld => {
                     const ta = document.createElement('textarea');
                     ta.className = fld.className;
                     ta.name = fld.name;
                     ta.value = fld.value;
+                    
+                    // Copia o estilo visual (fonte, cor), mas zera a geometria
                     ta.style.cssText = fld.style.cssText;
                     
-                    // Pega as medidas originais "em pé"
-                    const w = parseFloat(fld.style.width);
-                    const h = parseFloat(fld.style.height);
-                    const l = parseFloat(fld.style.left);
-                    const t = parseFloat(fld.style.top);
+                    // Captura as coordenadas que você marcou no Acrobat
+                    const L = parseFloat(fld.style.left) || 0;
+                    const T = parseFloat(fld.style.top) || 0;
+                    const W = parseFloat(fld.style.width) || 0;
+                    const H = parseFloat(fld.style.height) || 0;
                     
-                    // O SEGREDO: Inverte a largura com a altura e recalcula o centro
-                    ta.style.setProperty('width', h + 'px', 'important');
-                    ta.style.setProperty('height', w + 'px', 'important');
-                    ta.style.setProperty('left', (l + w/2 - h/2) + 'px', 'important');
-                    ta.style.setProperty('top', (t + h/2 - w/2) + 'px', 'important');
+                    // A MÁGICA: Converte as coordenadas do PDF para a tela horizontal
+                    ta.style.setProperty('position', 'absolute', 'important');
+                    ta.style.setProperty('left', (1122.52 - T - H) + 'px', 'important');
+                    ta.style.setProperty('top', L + 'px', 'important');
+                    ta.style.setProperty('width', H + 'px', 'important');
+                    ta.style.setProperty('height', W + 'px', 'important');
                     
-                    // Gira a caixa e esconde a barra de rolagem
-                    ta.style.setProperty('transform', 'rotate(-90deg)', 'important');
-                    ta.style.setProperty('transform-origin', 'center center', 'important');
+                    // Garante que o texto fique reto e a caixa não deforme
+                    ta.style.setProperty('transform', 'none', 'important');
                     ta.style.setProperty('resize', 'none', 'important');
-                    ta.style.setProperty('overflow', 'hidden', 'important');
+                    ta.style.setProperty('background', 'transparent', 'important');
                     
-                    fld.parentNode.replaceChild(ta, fld);
+                    // Remove o campo bugado e adiciona o perfeito
+                    fld.parentNode.removeChild(fld);
+                    overlay.appendChild(ta);
                 });
             }
         });
@@ -84,7 +100,7 @@
 
     // 3. NOVO: BAIXAR COMO PDF
     function baixarDados() {
-        // Isso vai abrir a tela de impressão nativa. O usuário só precisa escolher "Salvar como PDF"
+        // Aciona a tela de impressão nativa do navegador para salvar em PDF
         window.print();
     }
 </script>
