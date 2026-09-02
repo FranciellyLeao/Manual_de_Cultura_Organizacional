@@ -1,23 +1,21 @@
 <!DOCTYPE html>
 <html>
-<!-- INÍCIO DO SCRIPT DEFINITIVO -->
+<!-- INÍCIO DO SCRIPT DEFINITIVO (CORREÇÃO DE CAIXAS E DOWNLOAD PDF) -->
 <script>
-    // 1. GIRA, FORÇA A ESCALA COM !IMPORTANT E DESVIRA AS CAIXAS
+    // 1. GIRA PÁGINAS, INVERTE LARGURA/ALTURA E CORRIGE CAIXAS
     document.addEventListener('DOMContentLoaded', function() {
         const paginasParaCorrigir = ['p4', 'p6']; 
         
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
             if (pagina) {
-                // Força bruta para aplicar a rotação e a escala exata (70.7%)
+                // Força a página a deitar e igualar a largura
                 pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
                 pagina.style.setProperty('transform-origin', 'center center', 'important');
-                
-                // Remove exatamente a sobra de espaço em branco em cima e embaixo
                 pagina.style.setProperty('margin-top', '-164px', 'important');
                 pagina.style.setProperty('margin-bottom', '-164px', 'important');
                 
-                // Ajusta os campos de texto
+                // Arruma cada campo de texto dentro dessas páginas
                 pagina.querySelectorAll('.fld').forEach(fld => {
                     const ta = document.createElement('textarea');
                     ta.className = fld.className;
@@ -25,10 +23,23 @@
                     ta.value = fld.value;
                     ta.style.cssText = fld.style.cssText;
                     
-                    // Desvira a caixa de texto
+                    // Pega as medidas originais "em pé"
+                    const w = parseFloat(fld.style.width);
+                    const h = parseFloat(fld.style.height);
+                    const l = parseFloat(fld.style.left);
+                    const t = parseFloat(fld.style.top);
+                    
+                    // O SEGREDO: Inverte a largura com a altura e recalcula o centro
+                    ta.style.setProperty('width', h + 'px', 'important');
+                    ta.style.setProperty('height', w + 'px', 'important');
+                    ta.style.setProperty('left', (l + w/2 - h/2) + 'px', 'important');
+                    ta.style.setProperty('top', (t + h/2 - w/2) + 'px', 'important');
+                    
+                    // Gira a caixa e esconde a barra de rolagem
                     ta.style.setProperty('transform', 'rotate(-90deg)', 'important');
                     ta.style.setProperty('transform-origin', 'center center', 'important');
-                    ta.style.resize = 'none'; 
+                    ta.style.setProperty('resize', 'none', 'important');
+                    ta.style.setProperty('overflow', 'hidden', 'important');
                     
                     fld.parentNode.replaceChild(ta, fld);
                 });
@@ -36,7 +47,7 @@
         });
     });
 
-    // 2. ENVIO PARA O GOOGLE SHEETS
+    // 2. SALVAR NO GOOGLE SHEETS
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
 
     function salvarDados() {
@@ -63,7 +74,6 @@
             alert("✅ Mapa de Empatia salvo com sucesso!");
             btn.innerHTML = conteudoOriginal;
             btn.disabled = false;
-            document.querySelectorAll('.fld').forEach(i => i.value = ""); 
         })
         .catch(err => {
             alert("❌ Erro de conexão. Verifique sua internet.");
@@ -72,8 +82,10 @@
         });
     }
 
+    // 3. NOVO: BAIXAR COMO PDF
     function baixarDados() {
-        alert("🔒 Acesse o painel em /admin.html para gerenciar os dados!");
+        // Isso vai abrir a tela de impressão nativa. O usuário só precisa escolher "Salvar como PDF"
+        window.print();
     }
 </script>
 <!-- FIM DO SCRIPT -->
