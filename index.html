@@ -605,21 +605,30 @@ function baixarDados() {
 	}
 }
 </script>
-<!-- INÍCIO DO SCRIPT -->
+<!-- INÍCIO DO SCRIPT BLINDADO (SEQUESTRO DE BOTÕES E CORREÇÃO DE LAYOUT) -->
 <script>
-    // 1. CORRIGE AS PÁGINAS HORIZONTAIS
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
+
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. CAÇADOR DO 2025 (Vai apagar ele da tela)
+        document.querySelectorAll('.t').forEach(el => {
+            if(el.textContent.replace(/\s+/g, '').includes('2025')) {
+                el.style.display = 'none';
+                el.style.opacity = '0';
+            }
+        });
+
+        // 2. ARRUMAR AS PÁGINAS DEITADAS
         const paginasParaCorrigir = ['p4', 'p6']; 
         paginasParaCorrigir.forEach(id => {
             const pagina = document.getElementById(id);
             if (pagina) {
-                // Deita a página e arruma a largura
                 pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
                 pagina.style.setProperty('transform-origin', 'center center', 'important');
                 pagina.style.setProperty('margin-top', '-164px', 'important');
                 pagina.style.setProperty('margin-bottom', '-164px', 'important');
                 
-                // Cria a Camada Invisível para as caixas de texto
                 const overlay = document.createElement('div');
                 overlay.style.position = 'absolute';
                 overlay.style.width = '1122.52px';
@@ -630,7 +639,6 @@ function baixarDados() {
                 overlay.style.zIndex = '2000000000';
                 pagina.appendChild(overlay);
 
-                // Varre os campos originais e joga na posição certa
                 const campos = pagina.querySelectorAll('.fld');
                 campos.forEach(fld => {
                     const ta = document.createElement('textarea');
@@ -658,59 +666,78 @@ function baixarDados() {
                 });
             }
         });
-    });
 
-    // 2. FUNÇÃO DE SALVAR NO PAINEL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
+        // 3. SEQUESTRO DOS BOTÕES (Adeus download de JSON)
+        const btnSalvar = document.querySelector('button[title="Salvar dados"]');
+        const btnBaixar = document.querySelector('button[title="Baixar dados"]');
 
-    function salvarDados() {
-        const btn = document.querySelector('button[title="Salvar dados"]');
-        const conteudoOriginal = btn.innerHTML;
-        btn.innerHTML = "Salvando...";
-        btn.disabled = true;
+        if(btnSalvar) {
+            btnSalvar.type = 'button'; // Diz pro navegador: "Isso não é um botão de formulário!"
+            btnSalvar.removeAttribute('onclick'); // Remove a ação velha
+            
+            btnSalvar.addEventListener('click', function(e) {
+                e.preventDefault(); // Impede o redirecionamento
+                
+                const conteudoOriginal = btnSalvar.innerHTML;
+                btnSalvar.innerHTML = "Salvando...";
+                btnSalvar.disabled = true;
 
-        const formData = new FormData();
-        formData.append('action', 'salvar');
+                const formData = new FormData();
+                formData.append('action', 'salvar');
 
-        let temDado = false;
-        document.querySelectorAll('.fld, textarea').forEach(input => {
-            if(input.value.trim() !== "") {
-                formData.append(input.name, input.value);
-                temDado = true;
-            }
-        });
+                let temDado = false;
+                document.querySelectorAll('.fld, textarea').forEach(input => {
+                    if(input.value.trim() !== "") {
+                        formData.append(input.name, input.value);
+                        temDado = true;
+                    }
+                });
 
-        if(!temDado) {
-            alert("Preencha algum campo antes de salvar!");
-            btn.innerHTML = conteudoOriginal;
-            btn.disabled = false;
-            return;
+                if(!temDado) {
+                    alert("Preencha algum campo antes de salvar!");
+                    btnSalvar.innerHTML = conteudoOriginal;
+                    btnSalvar.disabled = false;
+                    return;
+                }
+
+                fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors',
+                    body: new URLSearchParams(formData) 
+                })
+                .then(() => {
+                    alert("✅ Dados salvos com sucesso no Painel!");
+                    btnSalvar.innerHTML = conteudoOriginal;
+                    btnSalvar.disabled = false;
+                })
+                .catch(err => {
+                    alert("✅ Dados enviados! (Verifique o painel)");
+                    btnSalvar.innerHTML = conteudoOriginal;
+                    btnSalvar.disabled = false;
+                });
+            });
         }
 
-        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(formData) })
-        .then(() => {
-            alert("✅ Dados salvos com sucesso no Painel!");
-            btn.innerHTML = conteudoOriginal;
-            btn.disabled = false;
-        })
-        .catch(err => {
-            alert("✅ Dados enviados! (Verifique o painel)");
-            btn.innerHTML = conteudoOriginal;
-            btn.disabled = false;
-        });
-    }
-
-    // 3. FUNÇÃO DE BAIXAR EM PDF
-    function baixarDados() {
-        // Grava o que foi digitado no HTML pra impressora conseguir ler
-        document.querySelectorAll('.fld, textarea').forEach(campo => {
-            campo.setAttribute('value', campo.value);
-            campo.textContent = campo.value;
-        });
-        
-        // Abre a tela de salvar em PDF do seu computador
-        window.print();
-    }
+        if(btnBaixar) {
+            btnBaixar.type = 'button'; // Diz pro navegador: "Isso não é um botão de formulário!"
+            btnBaixar.removeAttribute('onclick'); // Remove a ação velha
+            
+            btnBaixar.addEventListener('click', function(e) {
+                e.preventDefault(); // Impede baixar o JSON
+                
+                // Grava o que foi digitado no HTML pra impressora ler
+                document.querySelectorAll('.fld, textarea').forEach(campo => {
+                    campo.setAttribute('value', campo.value);
+                    campo.textContent = campo.value;
+                });
+                
+                // Chama a tela nativa de PDF do Windows/Mac
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            });
+        }
+    });
 </script>
 <!-- FIM DO SCRIPT -->
 </body>
