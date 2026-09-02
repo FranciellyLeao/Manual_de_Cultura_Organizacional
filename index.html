@@ -604,140 +604,139 @@ function baixarDados() {
 		alert('Erro ao baixar arquivo: ' + error.message);
 	}
 }
-</script>
-<!-- INÍCIO DO SCRIPT BLINDADO (SEQUESTRO DE BOTÕES E CORREÇÃO DE LAYOUT) -->
+<!-- INÍCIO DO SCRIPT BLINDADO -->
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
-
     document.addEventListener('DOMContentLoaded', function() {
         
-        // 1. CAÇADOR DO 2025 (Vai apagar ele da tela)
+        // 1. ARRANCAR O COMPORTAMENTO DE "BAIXAR JSON" NA MARRA
+        document.querySelectorAll('button').forEach(btn => {
+            btn.type = 'button'; // Proíbe o botão de agir como formulário
+        });
+        document.querySelectorAll('form').forEach(form => {
+            form.onsubmit = function(e) { e.preventDefault(); return false; }; // Proíbe a página de redirecionar
+        });
+
+        // 2. SEQUESTRAR OS BOTÕES (Eles só vão fazer o que a gente mandar agora)
+        setTimeout(() => {
+            const btnBaixar = document.querySelector('button[title="Baixar dados"]');
+            if (btnBaixar) {
+                btnBaixar.onclick = function(e) {
+                    if(e) e.preventDefault();
+                    gerarPDF();
+                    return false;
+                };
+            }
+
+            const btnSalvar = document.querySelector('button[title="Salvar dados"]');
+            if (btnSalvar) {
+                btnSalvar.onclick = function(e) {
+                    if(e) e.preventDefault();
+                    enviarProGoogle();
+                    return false;
+                };
+            }
+        }, 500);
+
+        // 3. APAGAR O 2025 (Mesmo se ele estiver quebrado)
         document.querySelectorAll('.t').forEach(el => {
-            if(el.textContent.replace(/\s+/g, '').includes('2025')) {
-                el.style.display = 'none';
-                el.style.opacity = '0';
-            }
-        });
-
-        // 2. ARRUMAR AS PÁGINAS DEITADAS
-        const paginasParaCorrigir = ['p4', 'p6']; 
-        paginasParaCorrigir.forEach(id => {
-            const pagina = document.getElementById(id);
-            if (pagina) {
-                pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
-                pagina.style.setProperty('transform-origin', 'center center', 'important');
-                pagina.style.setProperty('margin-top', '-164px', 'important');
-                pagina.style.setProperty('margin-bottom', '-164px', 'important');
-                
-                const overlay = document.createElement('div');
-                overlay.style.position = 'absolute';
-                overlay.style.width = '1122.52px';
-                overlay.style.height = '793.7px';
-                overlay.style.top = '50%';
-                overlay.style.left = '50%';
-                overlay.style.transform = 'translate(-50%, -50%) rotate(-90deg)';
-                overlay.style.zIndex = '2000000000';
-                pagina.appendChild(overlay);
-
-                const campos = pagina.querySelectorAll('.fld');
-                campos.forEach(fld => {
-                    const ta = document.createElement('textarea');
-                    ta.className = fld.className;
-                    ta.name = fld.name;
-                    ta.value = fld.value;
-                    ta.style.cssText = fld.style.cssText;
-                    
-                    const L = parseFloat(fld.style.left) || 0;
-                    const T = parseFloat(fld.style.top) || 0;
-                    const W = parseFloat(fld.style.width) || 0;
-                    const H = parseFloat(fld.style.height) || 0;
-                    
-                    ta.style.setProperty('position', 'absolute', 'important');
-                    ta.style.setProperty('left', (1122.52 - T - H) + 'px', 'important');
-                    ta.style.setProperty('top', L + 'px', 'important');
-                    ta.style.setProperty('width', H + 'px', 'important');
-                    ta.style.setProperty('height', W + 'px', 'important');
-                    ta.style.setProperty('transform', 'none', 'important');
-                    ta.style.setProperty('resize', 'none', 'important');
-                    ta.style.setProperty('background', 'transparent', 'important');
-                    
-                    fld.parentNode.removeChild(fld);
-                    overlay.appendChild(ta);
-                });
-            }
-        });
-
-        // 3. SEQUESTRO DOS BOTÕES (Adeus download de JSON)
-        const btnSalvar = document.querySelector('button[title="Salvar dados"]');
-        const btnBaixar = document.querySelector('button[title="Baixar dados"]');
-
-        if(btnSalvar) {
-            btnSalvar.type = 'button'; // Diz pro navegador: "Isso não é um botão de formulário!"
-            btnSalvar.removeAttribute('onclick'); // Remove a ação velha
-            
-            btnSalvar.addEventListener('click', function(e) {
-                e.preventDefault(); // Impede o redirecionamento
-                
-                const conteudoOriginal = btnSalvar.innerHTML;
-                btnSalvar.innerHTML = "Salvando...";
-                btnSalvar.disabled = true;
-
-                const formData = new FormData();
-                formData.append('action', 'salvar');
-
-                let temDado = false;
-                document.querySelectorAll('.fld, textarea').forEach(input => {
-                    if(input.value.trim() !== "") {
-                        formData.append(input.name, input.value);
-                        temDado = true;
-                    }
-                });
-
-                if(!temDado) {
-                    alert("Preencha algum campo antes de salvar!");
-                    btnSalvar.innerHTML = conteudoOriginal;
-                    btnSalvar.disabled = false;
-                    return;
+            if(el.textContent.includes('20') || el.textContent.includes('25')) {
+                // Tenta achar qualquer pedaço do 2025 e deixa invisível
+                if(el.textContent.length <= 4) {
+                    el.style.opacity = '0'; 
                 }
+            }
+        });
 
-                fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors',
-                    body: new URLSearchParams(formData) 
-                })
-                .then(() => {
-                    alert("✅ Dados salvos com sucesso no Painel!");
-                    btnSalvar.innerHTML = conteudoOriginal;
-                    btnSalvar.disabled = false;
-                })
-                .catch(err => {
-                    alert("✅ Dados enviados! (Verifique o painel)");
-                    btnSalvar.innerHTML = conteudoOriginal;
-                    btnSalvar.disabled = false;
-                });
-            });
-        }
+        // 4. CORREÇÃO DAS PÁGINAS E CAIXAS
+        try {
+            const paginasParaCorrigir = ['p4', 'p6']; 
+            paginasParaCorrigir.forEach(id => {
+                const pagina = document.getElementById(id);
+                if (pagina) {
+                    pagina.style.setProperty('transform', 'rotate(90deg) scale(0.7071)', 'important');
+                    pagina.style.setProperty('transform-origin', 'center center', 'important');
+                    pagina.style.setProperty('margin-top', '-164px', 'important');
+                    pagina.style.setProperty('margin-bottom', '-164px', 'important');
+                    
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = 'position:absolute; width:1122.52px; height:793.7px; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-90deg); z-index:2000000000;';
+                    pagina.appendChild(overlay);
 
-        if(btnBaixar) {
-            btnBaixar.type = 'button'; // Diz pro navegador: "Isso não é um botão de formulário!"
-            btnBaixar.removeAttribute('onclick'); // Remove a ação velha
-            
-            btnBaixar.addEventListener('click', function(e) {
-                e.preventDefault(); // Impede baixar o JSON
-                
-                // Grava o que foi digitado no HTML pra impressora ler
-                document.querySelectorAll('.fld, textarea').forEach(campo => {
-                    campo.setAttribute('value', campo.value);
-                    campo.textContent = campo.value;
-                });
-                
-                // Chama a tela nativa de PDF do Windows/Mac
-                setTimeout(() => {
-                    window.print();
-                }, 500);
+                    pagina.querySelectorAll('.fld').forEach(fld => {
+                        const ta = document.createElement('textarea');
+                        ta.className = fld.className;
+                        ta.name = fld.name;
+                        ta.value = fld.value;
+                        ta.style.cssText = fld.style.cssText;
+                        
+                        const L = parseFloat(fld.style.left) || 0;
+                        const T = parseFloat(fld.style.top) || 0;
+                        const W = parseFloat(fld.style.width) || 0;
+                        const H = parseFloat(fld.style.height) || 0;
+                        
+                        ta.style.setProperty('position', 'absolute', 'important');
+                        ta.style.setProperty('left', (1122.52 - T - H) + 'px', 'important');
+                        ta.style.setProperty('top', L + 'px', 'important');
+                        ta.style.setProperty('width', H + 'px', 'important');
+                        ta.style.setProperty('height', W + 'px', 'important');
+                        ta.style.setProperty('transform', 'none', 'important');
+                        ta.style.setProperty('resize', 'none', 'important');
+                        ta.style.setProperty('background', 'transparent', 'important');
+                        
+                        fld.parentNode.removeChild(fld);
+                        overlay.appendChild(ta);
+                    });
+                }
             });
-        }
+        } catch(erro) { console.error("Erro no layout: ", erro); }
     });
+
+    // FUNÇÕES REAIS DOS BOTÕES
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
+
+    function enviarProGoogle() {
+        const btn = document.querySelector('button[title="Salvar dados"]');
+        const conteudoOriginal = btn ? btn.innerHTML : "Salvando";
+        if(btn) { btn.innerHTML = "Salvando..."; btn.disabled = true; }
+
+        const formData = new FormData();
+        formData.append('action', 'salvar');
+
+        let temDado = false;
+        document.querySelectorAll('.fld, textarea').forEach(input => {
+            if(input.value && input.value.trim() !== "") {
+                formData.append(input.name, input.value);
+                temDado = true;
+            }
+        });
+
+        if(!temDado) {
+            alert("Preencha algum campo antes de salvar!");
+            if(btn) { btn.innerHTML = conteudoOriginal; btn.disabled = false; }
+            return;
+        }
+
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(formData) })
+        .then(() => {
+            alert("✅ Dados salvos com sucesso no Painel!");
+            if(btn) { btn.innerHTML = conteudoOriginal; btn.disabled = false; }
+        })
+        .catch(err => {
+            alert("✅ Dados enviados! (Verifique o painel)");
+            if(btn) { btn.innerHTML = conteudoOriginal; btn.disabled = false; }
+        });
+    }
+
+    function gerarPDF() {
+        // Crava o texto na tela para a impressora ler
+        document.querySelectorAll('.fld, textarea').forEach(campo => {
+            campo.setAttribute('value', campo.value);
+            campo.textContent = campo.value;
+        });
+        
+        // Abre a tela nativa do computador para Salvar em PDF
+        window.print();
+    }
 </script>
 <!-- FIM DO SCRIPT -->
 </body>
