@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
-	<!-- INÍCIO DO SCRIPT DO BANCO DE DADOS E CORREÇÃO DE PÁGINAS -->
+<!-- INÍCIO DO SCRIPT DO BANCO DE DADOS E CORREÇÃO DE PÁGINAS -->
 <script>
     // 1. CORREÇÃO MÁGICA DAS PÁGINAS 5 E 7 (p4 e p6)
-    window.onload = function() {
+    document.addEventListener('DOMContentLoaded', function() {
         const paginasParaCorrigir = ['p4', 'p6'];
         
         paginasParaCorrigir.forEach(id => {
@@ -11,34 +11,25 @@
             if (!pagina) return;
             
             pagina.querySelectorAll('.fld').forEach(fld => {
-                // Cria um campo de múltiplas linhas (textarea) para substituir o input simples
+                // Cria a caixa de múltiplas linhas
                 const ta = document.createElement('textarea');
                 ta.className = fld.className;
                 ta.name = fld.name;
                 ta.value = fld.value;
+                
+                // Copia o estilo EXATO do input original (sem inverter largura/altura)
                 ta.style.cssText = fld.style.cssText;
                 
-                // Pega as medidas originais
-                const w = parseFloat(fld.style.width);
-                const h = parseFloat(fld.style.height);
-                const l = parseFloat(fld.style.left);
-                const t = parseFloat(fld.style.top);
-                
-                // Inverte largura e altura e recalcula o centro para encaixar no desenho
-                ta.style.width = h + 'px';
-                ta.style.height = w + 'px';
-                ta.style.left = (l + w/2 - h/2) + 'px';
-                ta.style.top = (t + h/2 - w/2) + 'px';
-                
-                // Gira o texto para a horizontal
+                // O segredo: apenas gira a caixa no próprio eixo para compensar a página
                 ta.style.transform = 'rotate(-90deg)';
-                ta.style.resize = 'none'; // Evita que o usuário deforme a caixa
+                ta.style.transformOrigin = 'center center';
+                ta.style.resize = 'none'; // Impede o usuário de quebrar o layout
                 
                 // Substitui no HTML
                 fld.parentNode.replaceChild(ta, fld);
             });
         });
-    };
+    });
 
     // 2. ENVIO PARA O GOOGLE SHEETS
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
@@ -52,7 +43,6 @@
         const formData = new FormData();
         formData.append('action', 'salvar');
 
-        // Varre seu HTML catando tudo que for campo de texto ou textarea
         document.querySelectorAll('.fld').forEach(input => {
             if(input.value.trim() !== "") {
                 formData.append(input.name, input.value);
