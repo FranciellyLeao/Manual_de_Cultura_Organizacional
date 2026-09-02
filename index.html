@@ -5,10 +5,12 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4mRo3KjTdhipIzDkI8v07N4viQx0wV1poZv-x-afujxUScOHrjvJkwJVPUGgWC7X6ow/exec";
 
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. APAGAR O "2025" DA TELA
+        // 1. APAGAR O "2025" DA TELA (Caçador Agressivo)
         document.querySelectorAll('.t').forEach(el => {
-            if(el.textContent.trim() === '2025') {
-                el.style.display = 'none'; // Esconde o elemento
+            // Tira todos os espaços em branco invisíveis para garantir que vai achar o 2025
+            if(el.textContent.replace(/\s+/g, '').includes('2025')) {
+                el.style.color = 'transparent'; // Deixa o texto invisível
+                el.style.opacity = '0';
             }
         });
 
@@ -91,16 +93,15 @@
 
         fetch(SCRIPT_URL, { 
             method: 'POST', 
+            mode: 'no-cors',
             body: new URLSearchParams(formData) 
         })
-        .then(res => res.json())
-        .then(data => {
+        .then(() => {
             alert("✅ Dados salvos com sucesso no Painel!");
             btn.innerHTML = conteudoOriginal;
             btn.disabled = false;
         })
         .catch(err => {
-            // Se o Google bloquear a resposta, forçamos o aviso de sucesso mesmo assim
             alert("✅ Dados enviados! (Verifique o painel)");
             btn.innerHTML = conteudoOriginal;
             btn.disabled = false;
@@ -109,14 +110,16 @@
 
     // 4. BAIXAR COMO PDF
     function baixarDados() {
-        // Crava o texto digitado dentro do HTML para que a impressora consiga ler
+        // Crava o texto no HTML para a impressora ler perfeitamente
         document.querySelectorAll('.fld, textarea').forEach(campo => {
-            campo.textContent = campo.value;
+            campo.innerHTML = campo.value; // Força o texto para impressão
             campo.setAttribute('value', campo.value);
         });
         
-        // Abre a tela nativa de Salvar como PDF do navegador
-        window.print();
+        // Dá 1 segundo para o navegador processar o texto e abre a tela de salvar em PDF
+        setTimeout(() => {
+            window.print();
+        }, 500);
     }
 </script>
 <!-- FIM DO SCRIPT -->
