@@ -431,20 +431,51 @@ body { background: #e8e8e8; margin-top: 50px; }
 /* Print / PDF round-trip: one source page per printed page, no chrome margins or shadow.
    The exact paper size is pinned by a generated @page rule when all pages share one size. */
 @media print {
-	body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+	html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; margin-top: 0 !important; }
 	.top-bar, .toc, .thumbs { display: none !important; }
 	.page {
 		margin: 0 !important; padding: 0 !important;
 		box-shadow: none !important;
 		width: 793.7px !important; height: 1122.52px !important;
+		overflow: hidden !important;
 		break-after: page;
+		break-inside: avoid;
+		page-break-after: always;
+		page-break-inside: avoid;
 		-webkit-print-color-adjust: exact !important;
 		print-color-adjust: exact !important;
 	}
-	.page:last-child { break-after: auto; }
-	.page .bg { width: 100% !important; height: auto !important; }
+	.page:last-child { break-after: auto; page-break-after: auto; }
+	.page .bg { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+	.page .vec { max-width: 793.7px !important; max-height: 1122.52px !important; overflow: hidden !important; }
 }
 @page{size:793.7px 1122.52px;margin:0}
+
+/* RESPONSIVO MOBILE */
+@media screen and (max-width: 850px) {
+	body { margin-top: 44px; }
+	.top-bar {
+		padding: 8px 12px;
+		flex-wrap: wrap;
+		gap: 6px;
+		height: auto;
+	}
+	.top-bar-title { font-size: 12px; display: none; }
+	.top-bar-buttons { gap: 6px; flex-wrap: wrap; justify-content: center; width: 100%; }
+	.btn-top { padding: 6px 10px; font-size: 12px; }
+	.page {
+		width: 100vw !important;
+		height: auto !important;
+		margin: 4px auto;
+		transform-origin: top left;
+	}
+	.page .bg { width: 100% !important; height: auto !important; }
+	.page .vec { width: 100% !important; height: auto !important; }
+	.fld, .page textarea, .page input {
+		font-size: 10px !important;
+		transform: scale(1) !important;
+	}
+}
 </style>
 </head>
 <body>
