@@ -325,6 +325,53 @@
             });
         }
 
+        const NOMES_CAMPOS = {
+            Texto45: 'Responsável (Capa)',
+            Texto24: 'Subtítulo / Introdução',
+            Texto1: 'Missão',
+            Texto2: 'Visão',
+            Texto3: 'Valores',
+            Texto4: 'SWOT - Forças',
+            Texto5: 'SWOT - Fraquezas',
+            Texto6: 'SWOT - Oportunidades',
+            Texto7: 'SWOT - Ameaças',
+            Texto17: 'Persona - Nome',
+            Texto18: 'Persona - Idade',
+            Texto19: 'Persona - Estado Civil',
+            Texto20: 'Persona - Profissão/Cargo',
+            Texto21: 'Persona - Escolaridade',
+            Texto22: 'Persona - Renda Mensal',
+            Texto23: 'Persona - Cidade',
+            Texto8: 'Persona - Resumo',
+            Texto9: 'Persona - Hábitos',
+            Texto10: 'Persona - Rotina',
+            Texto11: 'Persona - Ganhos',
+            Texto12: 'Persona - Desafios',
+            Texto13: 'Fluência - Celular',
+            Texto14: 'Fluência - Agenda',
+            Texto15: 'Fluência - Notebook',
+            Texto16: 'Fluência - Redes Sociais',
+            Texto30: 'Empatia - Pensa e Sente',
+            Texto29: 'Empatia - Ouve',
+            Texto28: 'Empatia - Vê',
+            Texto31: 'Empatia - Fala e Faz',
+            Texto26: 'Empatia - Dores',
+            Texto27: 'Empatia - Ganhos',
+            Texto32: 'Jornada - Aprendizado',
+            Texto33: 'Jornada - Consideração',
+            Texto34: 'Jornada - Decisão',
+            Texto35: 'Jornada - Pós-Compra',
+            Texto38: 'Canvas - Parcerias Principais',
+            Texto40: 'Canvas - Atividades Principais',
+            Texto41: 'Canvas - Recursos Principais',
+            Texto39: 'Canvas - Proposta de Valor',
+            Texto43: 'Canvas - Relacionamento',
+            Texto42: 'Canvas - Canais',
+            Texto44: 'Canvas - Segmentos de Clientes',
+            Texto37: 'Canvas - Estrutura de Custos',
+            Texto36: 'Canvas - Fontes de Receita'
+        };
+
         function renderizar(dados) {
             const container = document.getElementById('cardList');
             container.innerHTML = '';
@@ -344,7 +391,8 @@
                     let resp = JSON.parse(item.respostas);
                     for (let key in resp) {
                         if (resp[key] && resp[key].trim() !== '') {
-                            fieldsHtml += '<span class="tag"><strong>' + key + ':</strong> ' + resp[key] + '</span>';
+                            const rotulo = NOMES_CAMPOS[key] || key;
+                            fieldsHtml += '<span class="tag"><strong>' + rotulo + ':</strong> ' + resp[key] + '</span>';
                         }
                     }
                 } catch(e) {
@@ -358,10 +406,20 @@
 
         function filtrar() {
             const termo = document.getElementById('busca').value.toLowerCase();
-            const filtrados = dadosGlobais.filter(item =>
-                (item.respostas && item.respostas.toLowerCase().includes(termo)) ||
-                (item.data && item.data.toLowerCase().includes(termo))
-            );
+            const filtrados = dadosGlobais.filter(item => {
+                if (item.data && item.data.toLowerCase().includes(termo)) return true;
+                if (!item.respostas) return false;
+                if (item.respostas.toLowerCase().includes(termo)) return true;
+                // Busca também pelos nomes amigáveis dos campos
+                try {
+                    const resp = JSON.parse(item.respostas);
+                    for (let k in resp) {
+                        const rotulo = NOMES_CAMPOS[k] || '';
+                        if (rotulo.toLowerCase().includes(termo) && resp[k]) return true;
+                    }
+                } catch(e) {}
+                return false;
+            });
             renderizar(filtrados);
         }
 
@@ -397,7 +455,8 @@
                 div.className = 'modal-field';
                 const val = campos[key] || '';
                 const isLong = val.length > 50;
-                div.innerHTML = '<label>' + key + '</label>' +
+                const rotulo = NOMES_CAMPOS[key] ? (NOMES_CAMPOS[key] + ' (' + key + ')') : key;
+                div.innerHTML = '<label>' + rotulo + '</label>' +
                     (isLong ? '<textarea data-key="' + key + '">' + val + '</textarea>'
                             : '<input data-key="' + key + '" value="' + val.replace(/"/g, '&quot;') + '">');
                 container.appendChild(div);
@@ -422,8 +481,8 @@
                 } catch(e) {}
             });
             const keys = ['Data', ...Array.from(allKeys)];
-            // Build CSV
-            let csv = keys.map(k => '"' + k.replace(/"/g, '""') + '"').join(',') + '\n';
+            // Build CSV com nomes amigáveis
+            let csv = keys.map(k => '"' + (NOMES_CAMPOS[k] ? NOMES_CAMPOS[k] : k).replace(/"/g, '""') + '"').join(',') + '\n';
             dadosGlobais.forEach(item => {
                 let row = [item.data || ''];
                 try {
