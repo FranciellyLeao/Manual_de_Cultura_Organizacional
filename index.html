@@ -383,7 +383,7 @@ body {
 
     // Detecta se abriu em modo de edição pelo painel admin
     const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('editId') || urlParams.get('id');
+    let editId = urlParams.get('editId') || urlParams.get('id');
 
     document.addEventListener('DOMContentLoaded', function() {
         if (editId) {
@@ -521,8 +521,7 @@ body {
         }
 
         if (editId) {
-            // Modo de edição:
-            // 1. Salva o registro atualizado no Google Sheets
+            const idAntigo = editId;
             const fdSave = new URLSearchParams();
             fdSave.append('action', 'salvar');
             for (let k in campos) {
@@ -531,27 +530,31 @@ body {
 
             fetch(SCRIPT_URL, { 
                 method: 'POST', 
+                mode: 'no-cors',
                 body: fdSave 
             })
-            .then(r => r.json().catch(() => ({})))
             .then(() => {
-                // 2. Remove o registro anterior no Google Sheets
                 const fdDel = new URLSearchParams();
                 fdDel.append('action', 'deletar');
-                fdDel.append('id', editId);
-                return fetch(SCRIPT_URL, { method: 'POST', body: fdDel });
+                fdDel.append('id', idAntigo);
+                return fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors',
+                    body: fdDel 
+                });
             })
             .then(() => {
-                // 3. Atualiza cache da sessão
-                try {
-                    const itemAtualizado = {
-                        id: editId,
-                        data: new Date().toLocaleString('pt-BR'),
-                        respostas: JSON.stringify(campos)
-                    };
-                    sessionStorage.setItem('edit_item_' + editId, JSON.stringify(itemAtualizado));
-                } catch(e) {}
-
+                return fetch(SCRIPT_URL + '?_=' + Date.now()).then(r => r.json());
+            })
+            .then(data => {
+                if (data && data.length > 0) {
+                    const novoItem = data[data.length - 1];
+                    editId = novoItem.id;
+                    try {
+                        sessionStorage.setItem('edit_item_' + editId, JSON.stringify(novoItem));
+                        window.history.replaceState({}, '', 'index.html?editId=' + encodeURIComponent(editId));
+                    } catch(e) {}
+                }
                 alert("✅ Alterações salvas com sucesso no Painel!");
                 btn.innerHTML = conteudoOriginal;
                 btn.disabled = false;
